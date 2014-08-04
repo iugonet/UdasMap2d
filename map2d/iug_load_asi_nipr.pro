@@ -69,8 +69,8 @@ endif
 source = file_retrieve(/struct)
 source.verbose = verbose
 source.local_data_dir  = root_data_dir() + 'iugonet/nipr/'
-; source.remote_data_dir = 'http://iugonet0.nipr.ac.jp/data/'
-source.remote_data_dir = 'http://polaris.nipr.ac.jp/~ytanaka/data/'
+source.remote_data_dir = 'http://iugonet0.nipr.ac.jp/data/'
+; source.remote_data_dir = 'http://polaris.nipr.ac.jp/~ytanaka/data/'
 if keyword_set(no_download) then source.no_download = 1
 if keyword_set(downloadonly) then source.downloadonly = 1
 relpathnames1 = file_dailynames(file_format='YYYY/MM/DD', trange=trange)
@@ -85,8 +85,6 @@ for i=0,n_elements(site_code)-1 do begin
     relpathnames  = instr+'/'+site_code[i]+'/'+$
       relpathnames1 + '/nipr_'+instr+'_'+site_code[i]+'_'+wlenstr[j]+'_'+$
       relpathnames2 + '_v??.cdf'
-
-print, relpathnames
 
     files = file_retrieve(relpathnames, _extra=source, /last_version)
 
