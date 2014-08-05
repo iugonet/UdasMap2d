@@ -1,5 +1,5 @@
 ;+
-;	PROCEDURE get_data_asi_nipr
+;	PROCEDURE get_data_thmasi
 ;
 ; :DESCRIPTION:
 ;    Extract the ASI data at the designated time from the tplot variable 
@@ -39,8 +39,8 @@
 ;    2014/07/08: Created
 ;
 ;-
-pro get_data_asi_nipr, asi_vn, set_time=set_time, $
-    altitude=altitude, aacgm=aacgm, data=data
+pro get_data_thmasi, asi_vn, set_time=set_time, $
+    cal=cal, altitude=altitude, aacgm=aacgm, data=data
 
 ;----- initialize the map2d environment -----;
 map2d_init
@@ -53,10 +53,24 @@ npar=n_params()
 if npar lt 1 then return
 ;----- if asi_vn is the index number for tplot var -----;
 vn = tnames(asi_vn)
+print, vn
 if total(vn eq '') gt 0 then begin
 	print, 'given tplot var(s) does not exist?'
 	return
 endif
+
+prefix = strmid( vn, 0, 8 )
+dtype = strmid( prefix, 4,3 ) ; ast or asf
+stn = strmid( vn, 8,4 ) ;3-letter station code
+
+help, dtype
+
+if strpos(dtype,'ast') eq 0 then is_thumb=1 else is_thumb=0
+if is_thumb then begin 
+	nx=32 & ny=32
+endif else begin
+	nx=256 & ny=256
+endelse
 
 ;----- set_time -----;
 if ~keyword_set(set_time) then begin
@@ -75,52 +89,41 @@ if ~keyword_set(altitude) then altitude=110.  ; 90, 110, 150, 250km
 ;----- aacgm -----;
 if ~keyword_set(aacgm) then aacgm=!map2d.coord
 
+;----- Load the cal file -----;
+if keyword_set(cal) then calstr = cal[i] else $
+	thm_load_asi_cal, stn, calstr
+
 ;----- obtain azimuth and elevation angle -----;
-azel_vn=vn+'_azel'  ; tplot variables for azel
-azel_vn = tnames(azel_vn)
-if total(azel_vn eq '') gt 0 then begin
-    print, 'no azimuth and elevation angle data: '+azel_vn+'!!!'
-    return
-endif
-get_data, azel_vn, data=azel
-azim=reform(azel.y[0, *, *, 0])
-elev=reform(azel.y[1, *, *, 0])
+idx = where( strpos( calstr.vars[*].name, vn+'_elev' ) eq 0 )
+if idx[0] ne -1 then elev = *(calstr.vars[idx[0]].dataptr)
+idx = where( strpos( calstr.vars[*].name, vn+'_azim' ) eq 0 )
+if idx[0] ne -1 then azim = *(calstr.vars[idx[0]].dataptr)
 
 ;----- obtain corner position data -----;
-cor_vn=vn+'_pos_cor'  ; tplot variables for position
-cor_vn = tnames(cor_vn)
-if total(cor_vn eq '') gt 0 then begin
-    print, 'no corner position data: '+cor_vn+'!!!'
+idx = where( strpos( calstr.vars[*].name, vn+'_alti' ) eq 0 )
+if idx[0] ne -1 then altvec = *(calstr.vars[idx[0]].dataptr)
+ialt=where(fix(altvec/1000.) eq fix(altitude), cnt)
+if cnt eq 0 then begin
+    print, 'no center position data for the designated altitude!!!'
     return
-endif else begin
-    get_data, cor_vn, data=cor_dat
-    altvec=cor_dat.v2
-    ialt=where(fix(altvec/1000.) eq fix(altitude), cnt)
-    if cnt eq 0 then begin
-        print, 'no corner position data for the designated altitude!!!'
-        return
-    endif
-    corner_glat=reform(cor_dat.y[0, ialt, *, *, 0])
-    corner_glon=reform(cor_dat.y[1, ialt, *, *, 0])
-endelse
+endif
+
+if NOT is_thumb then begin  ;For asf
+  idx = where( strpos( calstr.vars[*].name, vn+'_glat' ) eq 0 )
+  if idx[0] ne -1 then corner_glat = reform( (*(calstr.vars[idx[0]].dataptr))[ialt, *, *] ) ;[257, 257] 
+  idx = where( strpos( calstr.vars[*].name, vn+'_glon' ) eq 0 )
+  if idx[0] ne -1 then corner_glon = reform( (*(calstr.vars[idx[0]].dataptr))[ialt, *, *] ) ;[257, 257] 
+endif
 
 ;----- obtain center position data -----;
-cen_vn=vn+'_pos_cen'  ; tplot variables for position
-cen_vn = tnames(cen_vn)
-if total(cen_vn eq '') gt 0 then begin
-    print, 'no center position data: '+cen_vn+'!!!'
-    return
-endif else begin
-    get_data, cen_vn, data=cen_dat
-    altvec=cen_dat.v2
-    ialt=where(fix(altvec/1000.) eq fix(altitude), cnt)
-    if cnt eq 0 then begin
-        print, 'no center position data for the designated altitude!!!'
-        return
-    endif
-    center_glat=reform(cen_dat.y[0, ialt, *, *, 0])
-    center_glon=reform(cen_dat.y[1, ialt, *, *, 0])
-endelse
+center_glat=fltarr(nx, ny)
+center_glon=fltarr(nx, ny)
+for ix=0, nx-2 do begin
+    for iy=0, ny-2 do begin
+		center_glat(ix, iy)=mean(corner_glat(ix:ix+1, iy:iy+1))
+    	center_glon(ix, iy)=mean(corner_glon(ix:ix+1, iy:iy+1))
+	endfor
+endfor
 
 ;----- obtain mlat mlon -----;
 corner_mlat='' & corner_mlon=''
@@ -138,8 +141,6 @@ endif
 
 ;----- initialize output arrays -----;
 ntime=n_elements(set_time)
-dim=size(azim, /dim)
-nx=dim[0] & ny=dim[1]
 set_time_all = ''
 dat_time_all = ''
 image_all = fltarr(ntime, nx, ny)
@@ -162,8 +163,16 @@ for itime=0L, ntime-1 do begin
 	image = reform(d.y[tidx, *, *])
 	dtime=d.x[tidx]
 
+    if is_thumb then begin  ;array rotation mimicing Line 173 in thm_mosaic_array.pro
+      image = rotate( image, 8 )
+    endif else begin
+      bkgd = mean( image[0:10,0:10] )  ;Define the background count by averaging counts near the bottom-left corner
+      image_sbtrctd = image - bkgd  ;Subtraction of background count
+      image = image_sbtrctd
+    endelse
+
 	;----- check if data for the designated time is obtained or not. -----;
-	crt_dt=10.
+	crt_dt=2.
 	dt = abs(stime - d.x[tidx])
 	if dt lt crt_dt then note = '  (ok)' else note = ' !!! not within '+string(fix(crt_dt))+' sec !!!'
 	print, '========== '+vn+' =========='
