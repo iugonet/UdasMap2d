@@ -13,7 +13,7 @@
 ;   Yoshimasa Tanaka (E-mail: ytanaka@nipr.ac.jp)
 ;
 ; :HISTORY: 
-;   2014/07/07: Created
+;   2014/08/12: Created
 ; 
 ;-
 

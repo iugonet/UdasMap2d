@@ -8,7 +8,7 @@
 ;    reset: set to reset map2d system variables
 ;    set_time: the time for which 2D data is drawn on the world map.
 ;    coord: the name of the coordinate system.
-;			'geo' or 0 for geographic coordinate
+;           'geo' or 0 for geographic coordinate
 ;           'aacgm' or 1 for AACGM coordinate
 ;    glatc, glonc: geographic latitude and longitude of the center 
 ;                  of the map.
