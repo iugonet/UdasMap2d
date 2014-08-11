@@ -51,30 +51,12 @@ endif
 
 ;----- set set_time -----;
 if keyword_set(set_time) then begin
-    map2d_time, set_time, quiet=quiet
+    map2d_time, set_time
 endif
 
 ;----- set coord -----;
-type_coord=size(coord,/type)
-if type_coord ne 0 then begin
-    if type_coord eq 7 then begin	;string
-        case strlowcase(coord) of
-            'geo': tcoord=0
-            'aacgm': tcoord=1
-            else: begin
-                print, 'Not support such value for coord!'
-                return
-            end
-        endcase
-    endif else begin
-        if (type_coord gt 0) and (type_coord lt 6) then begin
-            tcoord=fix(coord)
-        endif else begin
-            print, 'Not support such data type for coord!'
-            return
-        endelse
-    endelse
-    !map2d.coord = tcoord
+if size(coord,/type) ne 0 then begin
+    map2d_coord, coord
 endif
 
 ;----- set glatc, glonc, scale -----;
