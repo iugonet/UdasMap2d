@@ -52,9 +52,6 @@ case (size(t,/type)) of
         get_timespan, tr & ts = time_struct(tr[0])
         hh = t / 100 & mm = t mod 100 
         time = time_string(ts, tfor='YYYY-MM-DD')+'/'+string(hh,mm,'(i2.2,":",i2.2)')
-
-print, time
-
         !map2d.time = time_double(time)
     end
     3 : begin  ;integer, interpreted as 'hhmm'
