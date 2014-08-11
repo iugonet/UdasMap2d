@@ -68,13 +68,22 @@ cmb_flag = ''
 
 for ivn=0L, n_elements(vns)-1 do begin
     vn = vns[ivn]
+	prefix = strmid( vn, 0, 8 )
+	dtype = strmid( prefix, 4,3 ) ; ast or asf
+	stn = strmid( vn, 8,4 ) ;3-letter station code
+	if strpos(dtype,'ast') eq 0 then is_thumb=1 else is_thumb=0
+	if is_thumb then begin 
+		nx=32 & ny=32
+	endif else begin
+		nx=256 & ny=256
+	endelse
 
     ;----- obtain image and position data -----;
 	get_data_thmasi, vn, set_time=set_time, $
     	cal=cal, altitude=altitude, aacgm=aacgm, data=data
 
 	elev=data.elev
-	img=data.data
+	img=reform(data.data)
 	if keyword_set(aacgm) then begin
 		lats_cor=data.corner_mlat
 		lons_cor=reform(data.corner_mlt)
@@ -101,7 +110,7 @@ for ivn=0L, n_elements(vns)-1 do begin
     scale_image_values, img, crng, imgscl
 
     ;----- generate array -----;
-	dim=size(elev, /dim)
+	dim=size(img, /dim)
 	nx=dim[0] & ny=dim[1]
 	elev=elev[*]
 	npxl=n_elements(elev)
@@ -109,15 +118,23 @@ for ivn=0L, n_elements(vns)-1 do begin
 	lons_corner=fltarr(npxl, 4)
 	flag=intarr(npxl)-1 
 
-    ipxl=0L
-    for iy=0L, ny-1 do begin
-    	for ix=0L, nx-1 do begin
-            lats_corner[ipxl,0:3] = transpose( lats_cor[ [ix,ix,ix+1,ix+1],[iy,iy+1,iy+1,iy] ] )
-            lons_corner[ipxl,0:3] = transpose( lons_cor[ [ix,ix,ix+1,ix+1],[iy,iy+1,iy+1,iy] ] )
-            if total(finite(lats_corner[ipxl, 0:3])) eq 4 then flag[ipxl]=1
-            ipxl = ipxl + 1L
-        endfor
-    endfor
+    if not is_thumb then begin  ;For asf
+	    ipxl=0L
+	    for iy=0L, ny-1 do begin
+	    	for ix=0L, nx-1 do begin
+	            lats_corner[ipxl,0:3] = transpose( lats_cor[ [ix,ix,ix+1,ix+1],[iy,iy+1,iy+1,iy] ] )
+	            lons_corner[ipxl,0:3] = transpose( lons_cor[ [ix,ix,ix+1,ix+1],[iy,iy+1,iy+1,iy] ] )
+	            if total(finite(lats_corner[ipxl, 0:3])) eq 4 then flag[ipxl]=1
+	            ipxl = ipxl + 1L
+	        endfor
+	    endfor
+    endif else begin  ;For ast
+		wt = total( finite(lats_cor), 1 ) ;[1024]
+		ipxl = where( wt eq 4, cnt )
+		if cnt gt 0 then flag[ipxl] = 1
+		lats_corner = transpose(lats_cor)  ;[1024, 4]
+		lons_corner = transpose(lons_cor)
+	endelse
 
     ;----- append array -----;
     append_array, cmb_elev, elev
@@ -145,7 +162,7 @@ if keyword_set(position) then begin
 endif else position = !p.position
 
 ;----- paint each pixel -----;
-for ipxl=0l, n_elements(cmb_elev)-1 do begin
+for ipxl=0L, n_elements(cmb_elev)-1 do begin
     if cmb_elev[ipxl] ge 8 and finite( cmb_img[ipxl] ) and cmb_flag[ipxl] eq 1 then begin
         polyfill, reform(cmb_lons_corner[ipxl,*]), reform(cmb_lats_corner[ipxl,*]), $
             color=cmb_imgscl[ipxl] 

@@ -6,9 +6,9 @@
 ;		annotations regarding the visualization of 2D data.
 ;
 ;	:KEYWORDS:
-;    center_glat: geographical latitude at which a plot region is centered.
-;    center_glon: geographical longitude at which a plot region is centered.
-;                 (both center_glat and center_glon should be given, otherwise ignored)
+;    glatc: geographical latitude at which a plot region is centered.
+;    glonc: geographical longitude at which a plot region is centered.
+;                 (both glatc and glonc should be given, otherwise ignored)
 ;    scale: same as the keyword "scale" of map_set
 ;    erase: aet to erase pre-existing graphics on the plot window.
 ;    position: gives the position of a plot panel on the plot window as the normal coordinates.
@@ -16,13 +16,13 @@
 ;    stereo: use the stereographic mapping, instead of satellite mapping (default)
 ;	 charsize: the size of the characters used for the labels.
 ;    aacgm: set to use the AACGM coordinates
-;    map_time: this is used to calculate MLT when aacgm is set
+;    set_time: this is used to calculate MLT when aacgm is set
 ;    mltlabel: set to draw the MLT labels every 2 hour.
 ;    lonlab: a latitude from which (toward the poles) the MLT labels are drawn.
 ;
 ; :EXAMPLES:
 ;    map2d_set
-;    map2d_set, center_glat=70., center_glon=180., /mltlabel, lonlab=74.
+;    map2d_set, glatc=70., glonc=180., /mltlabel, lonlab=74.
 ;
 ; :AUTHOR:
 ;    Yoshimasa Tanaka (E-mail: ytanaka@nipr.ac.jp)
@@ -32,20 +32,20 @@
 ;
 ;-
 
-PRO map2d_set, center_glat=center_glat, center_glon=center_glon, $
+PRO map2d_set, glatc=glatc, glonc=glonc, $
     scale=scale, erase=erase, position=position, label=label, $
     stereo=stereo, charsize=charsize, $
-    aacgm=aacgm, map_time=map_time, mltlabel=mltlabel, lonlab=lonlab
+    aacgm=aacgm, set_time=set_time, mltlabel=mltlabel, lonlab=lonlab
     
 ;----- Initialize the map2d environment -----;
 map2d_init
     
 ;===== Check parameters =====;
-;----- center_glat, center_glon -----;
-if size(center_glat,/type) eq 0 then center_glat=!map2d.glatc
-if size(center_glon,/type) eq 0 then center_glon=!map2d.glonc
-center_glon = (center_glon+360.) mod 360.
-if center_glon gt 180. then center_glon -= 360.
+;----- glatc, glonc -----;
+if size(glatc,/type) eq 0 then glatc=!map2d.glatc
+if size(glonc,/type) eq 0 then glonc=!map2d.glonc
+glonc = (glonc+360.) mod 360.
+if glonc gt 180. then glonc -= 360.
 
 ;----- scale -----;
 if ~keyword_set(scale) then scale=!map2d.scale
@@ -91,11 +91,13 @@ scale /= scl
 
 ;----- Calculate the rotation angle regarding MLT -----;
 ;hemisphere flag
-if center_glat gt 0 then hemis = 1 else hemis = -1
+if glatc gt 0 then hemis = 1 else hemis = -1
 if keyword_set(aacgm) then begin
-    aacgmconvcoord, center_glat, center_glon, 0.1, mlatc, mlonc, err, /to_aacgm
-    if ~keyword_set(map_time) then map_time = !map2d.time
-    ts = time_struct(map_time) & yrsec = (ts.doy-1)*86400l + long(ts.sod)
+    if ~keyword_set(set_time) then set_time = !map2d.time
+    ts = time_struct(set_time) & yrsec = (ts.doy-1)*86400l + long(ts.sod)
+
+    aacgmloadcoef, ts.year
+    aacgmconvcoord, glatc, glonc, 0.1, mlatc, mlonc, err, /to_aacgm
     tmltc = aacgmmlt(ts.year, yrsec, mlonc)
     mltc = ( tmltc + 24. ) mod 24.
     mltc_lon = 360./24.* mltc
@@ -119,8 +121,8 @@ endif else rot_angle = 0.
 
 ;----- Set the lat-lon canvas and draw the continents -----;
 if ~keyword_set(aacgm) then begin
-    latc=center_glat
-    lonc=center_glon
+    latc=glatc
+    lonc=glonc
 endif else begin
     latc=mlatc
     lonc=mltc_lon
@@ -128,7 +130,7 @@ endelse
 
 map_set, latc, lonc, rot_angle, $
     satellite=satellite, stereo=stereo, sat_p=[6.6, 0., 0.], $
-    scale=scale, /isotropic, /horizon, noerase=~KEYWORD_SET(erase), $
+    scale=scale, /isotropic, /horizon, noerase=~keyword_set(erase), $
 	label=label, charsize=charsize, latdel=10., londel=15.
 
 ;map_grid, latdel=10., londel=15.
@@ -143,8 +145,8 @@ map_set, latc, lonc, rot_angle, $
 if keyword_set(aacgm) and keyword_set(mltlabel) then begin
     ;write the mlt labels
     mlts = 15.*findgen(24) ;[deg]
-    lonnames=['00hmlt','','02hmlt','','04hmlt','','06hmlt','','08hmlt','','10hmlt','','12hmlt','', $
-        '14hmlt','','16hmlt','','18hmlt','','20hmlt','','22hmlt','']
+    lonnames=['00hMLT','','02hMLT','','04hMLT','','06hMLT','','08hMLT','','10hMLT','','12hMLT','', $
+      '14hMLT','','16hMLT','','18hMLT','','20hMLT','','22hMLT','']
     if ~keyword_set(lonlab) then lonlab = 77.
 
     ;calculate the orientation of the mtl labels

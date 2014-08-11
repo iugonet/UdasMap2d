@@ -24,7 +24,7 @@ iug_load_asi_nipr,site='hus'
 tplot_names
 
 ; Initialize map2d parameters
-map2d_init, map_time=2030  ; map2d_time, 2030
+map2d_init, set_time=2030  ; map2d_time, 2030
 
 ; Get the 2D data
 get_data_asi_nipr, 'nipr_asi_hus_0000', data=d
@@ -36,7 +36,7 @@ help, d, /str
 window, 1, xsize=600, ysize=600 & erase
 
 ; Draw map
-map2d_set, center_glat=65., center_glon=-25., scale=20e+6, /label, charsize=1.5
+map2d_set, glatc=65., glonc=-25., scale=20e+6, /label, charsize=1.5
 
 ; Overlay ASI images on the map
 overlay_map_asi_nipr, 'nipr_asi_hus_0000', cscharsize=1.5, tlcharsize=3.0
@@ -56,7 +56,7 @@ map2d_init, coord='aacgm'
 window, 1, xsize=600, ysize=600 & erase
 
 ; Draw map
-map2d_set, center_glat=65., center_glon=-25., scale=20e+6, /mltlabel, charsize=2.0
+map2d_set, glatc=65., glonc=-25., scale=20e+6, /mltlabel, charsize=2.0
 
 ; Overlay ASI images on the map
 overlay_map_asi_nipr, 'nipr_asi_hus_0000', cscharsize=1.5, tlcharsize=3.0

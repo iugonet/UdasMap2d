@@ -73,7 +73,7 @@ for ivn=0L, n_elements(vns)-1 do begin
 	get_data_asi_nipr, vn, set_time=set_time, $
     	altitude=altitude, aacgm=aacgm, data=data
 	elev=data.elev
-	img=data.data
+	img=reform(data.data)
 	if keyword_set(aacgm) then begin
 		lats_cor=data.corner_mlat
 		lons_cor=reform(data.corner_mlt)
@@ -161,7 +161,7 @@ if ~keyword_set(notimelabel) then begin
         x = !x.window[0]+0.02 & y = !y.window[0]+0.02
     endelse
     t = set_time
-    tstr = time_string(t, tfor='hh:mm')+' ut'
+    tstr = time_string(t, tfor='hh:mm')+' UT'
         xyouts, x, y, tstr, /normal, $
         font=1, charsize=tlcharsize
 endif

@@ -62,9 +62,6 @@ endif
 prefix = strmid( vn, 0, 8 )
 dtype = strmid( prefix, 4,3 ) ; ast or asf
 stn = strmid( vn, 8,4 ) ;3-letter station code
-
-help, dtype
-
 if strpos(dtype,'ast') eq 0 then is_thumb=1 else is_thumb=0
 if is_thumb then begin 
 	nx=32 & ny=32
@@ -93,6 +90,21 @@ if ~keyword_set(aacgm) then aacgm=!map2d.coord
 if keyword_set(cal) then calstr = cal[i] else $
 	thm_load_asi_cal, stn, calstr
 
+;----- check altitude -----;
+case is_thumb of
+	0: begin
+		idx = where( strpos( calstr.vars[*].name, vn+'_alti' ) eq 0 )
+		if idx[0] ne -1 then altvec = *(calstr.vars[idx[0]].dataptr)
+		ialt=where(fix(altvec/1000.) eq fix(altitude), cnt)
+		if cnt eq 0 then begin
+    		print, 'no position data for the designated altitude!!!'
+    		return
+		endif
+		alti=altitude
+	end
+	1: alti=110.
+endcase
+
 ;----- obtain azimuth and elevation angle -----;
 idx = where( strpos( calstr.vars[*].name, vn+'_elev' ) eq 0 )
 if idx[0] ne -1 then elev = *(calstr.vars[idx[0]].dataptr)
@@ -100,41 +112,44 @@ idx = where( strpos( calstr.vars[*].name, vn+'_azim' ) eq 0 )
 if idx[0] ne -1 then azim = *(calstr.vars[idx[0]].dataptr)
 
 ;----- obtain corner position data -----;
-idx = where( strpos( calstr.vars[*].name, vn+'_alti' ) eq 0 )
-if idx[0] ne -1 then altvec = *(calstr.vars[idx[0]].dataptr)
-ialt=where(fix(altvec/1000.) eq fix(altitude), cnt)
-if cnt eq 0 then begin
-    print, 'no center position data for the designated altitude!!!'
-    return
-endif
-
-if NOT is_thumb then begin  ;For asf
-  idx = where( strpos( calstr.vars[*].name, vn+'_glat' ) eq 0 )
-  if idx[0] ne -1 then corner_glat = reform( (*(calstr.vars[idx[0]].dataptr))[ialt, *, *] ) ;[257, 257] 
-  idx = where( strpos( calstr.vars[*].name, vn+'_glon' ) eq 0 )
-  if idx[0] ne -1 then corner_glon = reform( (*(calstr.vars[idx[0]].dataptr))[ialt, *, *] ) ;[257, 257] 
-endif
-
-;----- obtain center position data -----;
-center_glat=fltarr(nx, ny)
-center_glon=fltarr(nx, ny)
-for ix=0, nx-2 do begin
-    for iy=0, ny-2 do begin
-		center_glat(ix, iy)=mean(corner_glat(ix:ix+1, iy:iy+1))
-    	center_glon(ix, iy)=mean(corner_glon(ix:ix+1, iy:iy+1))
+if not is_thumb then begin  ;For asf
+	idx = where( strpos( calstr.vars[*].name, vn+'_glat' ) eq 0 )
+	if idx[0] ne -1 then corner_glat = reform( (*(calstr.vars[idx[0]].dataptr))[ialt, *, *] ) ;[257, 257] 
+	idx = where( strpos( calstr.vars[*].name, vn+'_glon' ) eq 0 )
+	if idx[0] ne -1 then corner_glon = reform( (*(calstr.vars[idx[0]].dataptr))[ialt, *, *] ) ;[257, 257] 
+	;----- obtain center position data -----;
+	center_glat=fltarr(nx, ny)
+	center_glon=fltarr(nx, ny)
+	for ix=0, nx-2 do begin
+	    for iy=0, ny-2 do begin
+			center_glat(ix, iy)=mean(corner_glat(ix:ix+1, iy:iy+1))
+	    	center_glon(ix, iy)=mean(corner_glon(ix:ix+1, iy:iy+1))
+		endfor
 	endfor
-endfor
+endif else begin  ;For ast
+	idx = where( strpos( calstr.vars[*].name, vn+'_glat' ) eq 0 )
+	if idx[0] ne -1 then corner_glat = *(calstr.vars[idx[0]].dataptr) ;[4, 1024] 
+	idx = where( strpos( calstr.vars[*].name, vn+'_glon' ) eq 0 )
+	if idx[0] ne -1 then corner_glon = *(calstr.vars[idx[0]].dataptr) ;[4, 1024] 
+	;----- obtain center position data -----;
+	center_glat=fltarr(nx*ny)
+	center_glon=fltarr(nx*ny)
+	for ipxl=0L, nx*ny-1 do begin
+		center_glat(ipxl)=mean(corner_glat(*, ipxl))
+	    center_glon(ipxl)=mean(corner_glon(*, ipxl))
+	endfor
+endelse
 
 ;----- obtain mlat mlon -----;
 corner_mlat='' & corner_mlon=''
 center_mlat='' & center_mlon=''
 if keyword_set(aacgm) then begin
 	;----- corner mlat mlon -----;
-	altmat = corner_glat & altmat[*] = altitude ;***** altitude in km *****;
+	altmat = corner_glat & altmat[*] = alti ;***** altitude in km *****;
 	aacgmconvcoord, corner_glat, corner_glon, altmat, $
 		corner_mlat, corner_mlon, err, /to_aacgm
 	;----- center mlat mlon -----;
-	altmat = center_glat & altmat[*] = altitude ;***** altitude in km *****;
+	altmat = center_glat & altmat[*] = alti ;***** altitude in km *****;
 	aacgmconvcoord, center_glat, center_glon, altmat, $
 		center_mlat, center_mlon, err, /to_aacgm
 endif
@@ -209,7 +224,7 @@ for itime=0L, ntime-1 do begin
 endfor
 
 data={name:vn, set_time:set_time_all, dat_time:dat_time_all, $
-	data:image_all, alti:altitude, azim:azim, elev:elev, $
+	data:image_all, alti:alti, azim:azim, elev:elev, $
 	center_glat:center_glat, center_glon:center_glon, $
 	corner_glat:corner_glat, corner_glon:corner_glon, $
 	center_mlat:center_mlat, center_mlon:center_mlon, center_mlt:center_mlt_all, $
