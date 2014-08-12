@@ -19,6 +19,7 @@
 ;    set_time: this is used to calculate MLT when aacgm is set
 ;    mltlabel: set to draw the MLT labels every 2 hour.
 ;    lonlab: a latitude from which (toward the poles) the MLT labels are drawn.
+;    nogrid: set to suppress drawing the lat-lon mesh
 ;
 ; :EXAMPLES:
 ;    map2d_set
@@ -35,7 +36,10 @@
 PRO map2d_set, glatc=glatc, glonc=glonc, $
     scale=scale, erase=erase, position=position, label=label, $
     stereo=stereo, charsize=charsize, $
-    aacgm=aacgm, set_time=set_time, mltlabel=mltlabel, lonlab=lonlab
+    aacgm=aacgm, set_time=set_time, mltlabel=mltlabel, lonlab=lonlab, $
+    nogrid=nogrid, $
+    dlat_grid=dlat_grid, dlon_grid=dlon_grid, color_grid=color_grid, $
+    linethick_grid=linethick_grid 
     
 ;----- Initialize the map2d environment -----;
 map2d_init
@@ -131,9 +135,11 @@ endelse
 map_set, latc, lonc, rot_angle, $
     satellite=satellite, stereo=stereo, sat_p=[6.6, 0., 0.], $
     scale=scale, /isotropic, /horizon, noerase=~keyword_set(erase), $
-	label=label, charsize=charsize, latdel=10., londel=15.
+	label=label, charsize=charsize 
 
-;map_grid, latdel=10., londel=15.
+if ~keyword_set(nogrid) then $
+  map2d_grid, dlat=dlat, dlon=dlon, color=color_grid, $
+    linethick=linethick_grid 
   
 ;    ;Resize the canvas size for the position values
 ;    scl = (!x.window[1]-!x.window[0]) < (!y.window[1]-!y.window[0])
