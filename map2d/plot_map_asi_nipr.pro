@@ -12,7 +12,7 @@
 ;    altitude: set the altitude on which the image data will be mapped.
 ;              The default value is 110 (km).
 ;	 colorrange: set the range of values of colorscale
-;    center_glat: geographical latitude at which a plot region is centered
+;    glatc: geographical latitude at which a plot region is centered
 ;    center_glon: geographical longitude at which a plot region is centered
 ;    scale: same as the keyword "scale" of map_set
 ;    erase: set to erase pre-existing graphics on the plot window.
@@ -33,7 +33,7 @@
 ;
 ; :EXAMPLES:
 ;   plot_map_asi_nipr, 'nipr_asi_hus_0000'
-;   plot_map_asi_nipr, 'nipr_asi_hus_0000', center_glat=65., center_glon=-15. 
+;   plot_map_asi_nipr, 'nipr_asi_hus_0000', glatc=65., glonc=-15. 
 ;   
 ; :AUTHOR:
 ;    Yoshimasa Tanaka (E-mail: ytanaka@nipr.ac.jp)
@@ -44,11 +44,13 @@
 ;-
 pro plot_map_asi_nipr, asi_vns, set_time=set_time, $
     altitude=altitude, colorrange=colorrange, $
-	center_glat=center_glat, center_glon=center_glon, $
+	glatc=glatc, glonc=glonc, $
     scale=scale, erase=erase, position=position, $
-	label=label, stereo=stereo, $
+	label=label, stereo=stereo, coast=coast, $
 	mapcharsize=mapcharsize, $
     aacgm=aacgm, mltlabel=mltlabel, lonlab=lonlab, $
+    nogrid=nogrid, dlat_grid=dlat_grid, dlon_grid=dlon_grid, $
+    color_grid=color_grid, linethick_grid=linethick_grid, $
     notimelabel=notimelabel, timelabelpos=timelabelpos, $
 	tlcharsize=tlcharsize, $
     nocolorscale=nocolorscale, colorscalepos=colorscalepos, $
@@ -64,10 +66,13 @@ endif
 map2d_init
   
 ;Set map_set if any map projection is not defined
-map2d_set, center_glat=center_glat, center_glon=center_glon, $
+map2d_set, glatc=glatc, glonc=glonc, $
     scale=scale, erase=erase, position=position, label=label, $
     stereo=stereo, charsize=mapcharsize, $
-    aacgm=aacgm, map_time=set_time, mltlabel=mltlabel, lonlab=lonlab
+    aacgm=aacgm, set_time=set_time, mltlabel=mltlabel, lonlab=lonlab, $
+    nogrid=nogrid, $
+    dlat_grid=dlat_grid, dlon_grid=dlon_grid, color_grid=color_grid, $
+    linethick_grid=linethick_grid 
 
 ;Draw a fan plot on map
 overlay_map_asi_nipr, asi_vns, set_time=set_time, $
@@ -80,7 +85,7 @@ overlay_map_asi_nipr, asi_vns, set_time=set_time, $
 
 ;Draw the world map
 if keyword_set(coast) then begin
-    overlay_map_coast, geo_plot=(~keyword(aacgm)), position=position
+    overlay_map_coast, geo_plot=(~keyword_set(aacgm)), position=position
 endif
   
 ;Draw the color scale on the right in screen

@@ -69,8 +69,8 @@ endif
 source = file_retrieve(/struct)
 source.verbose = verbose
 source.local_data_dir  = root_data_dir() + 'iugonet/nipr/'
-; source.remote_data_dir = 'http://iugonet0.nipr.ac.jp/data/'
-source.remote_data_dir = 'http://polaris.nipr.ac.jp/~ytanaka/data/'
+source.remote_data_dir = 'http://iugonet0.nipr.ac.jp/data/'
+; source.remote_data_dir = 'http://polaris.nipr.ac.jp/~ytanaka/data/'
 if keyword_set(no_download) then source.no_download = 1
 if keyword_set(downloadonly) then source.downloadonly = 1
 relpathnames1 = file_dailynames(file_format='YYYY', trange=trange)
@@ -137,10 +137,6 @@ for i=0,n_elements(site_code)-1 do begin
           ;----- options -----;
           case param of
             'keo_raw_ns': begin
-              ;----- Reverse N-S -----;
-              get_data, tplot_name_tmp[k], data=d, dlim=dlim, lim=lim
-              d.y=reverse(d.y, 2)
-              store_data, tplot_name_tmp[k], data=d, dlim=dlim, lim=lim
               options, tplot_name_tmp[k], ytitle=site_code[i]+' '+wlenstr[j]+'!CNS keogram', $
                 ysubtitle = '[pixels]', spec=1, ztitle='[counts]'
               tplot_name_new='nipr_'+instr+'_ns_'+site_code[i]+'_'+wlenstr[j]
