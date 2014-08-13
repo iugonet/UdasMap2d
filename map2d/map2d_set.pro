@@ -138,7 +138,7 @@ map_set, latc, lonc, rot_angle, $
 	label=label, charsize=charsize 
 
 if ~keyword_set(nogrid) then $
-  map2d_grid, dlat=dlat, dlon=dlon, color=color_grid, $
+  map2d_grid, dlat=dlat_grid, dlon=dlon_grid, color=color_grid, $
     linethick=linethick_grid 
   
 ;    ;Resize the canvas size for the position values

@@ -31,7 +31,7 @@ PRO map2d_grid, dlat=dlat, dlon=dlon, color=color, linethick=linethick
   map2d_init
   
   if ~keyword_set(dlat) then dlat = 10. 
-  if ~keyword_set(don) then dlon = 15.  ; 15 deg = 1 hour in local time
+  if ~keyword_set(dlon) then dlon = 15.  ; 15 deg = 1 hour in local time
   
   map_grid, latdel=dlat, londel=dlon, color=color, glinethick=linethick  
   
