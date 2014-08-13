@@ -13,7 +13,7 @@
 ;              The default value is 110 (km).
 ;	 colorrange: set the range of values of colorscale
 ;    glatc: geographical latitude at which a plot region is centered
-;    center_glon: geographical longitude at which a plot region is centered
+;    glonc: geographical longitude at which a plot region is centered
 ;    scale: same as the keyword "scale" of map_set
 ;    erase: set to erase pre-existing graphics on the plot window.
 ;    position: set the location of the plot frame in the plot window
