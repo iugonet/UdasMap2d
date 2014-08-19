@@ -11,7 +11,9 @@
 ;    set_time: set the time (UNIX time) to plot all-sky imager data
 ;    altitude: set the altitude on which the image data will be mapped.
 ;              The default value is 110 (km).
-;    aacgm: set to plot data in the AACGM coordinates
+;    coord: the name of the coordinate system.
+;           'geo' or 0 for geographic coordinate
+;           'aacgm' or 1 for AACGM coordinate
 ;    position:  Set the location of the plot frame in the plot window
 ;	 colorrange: set the range of values of colorscale
 ;    notimelabel: set to surpress drawing the time label
@@ -30,7 +32,7 @@
 ;
 ;-
 pro overlay_map_thmasi, asi_vns, set_time=set_time, $
-    altitude=altitude, aacgm=aacgm, position=position, $
+    altitude=altitude, coord=coord, position=position, $
     colorrange=colorrange, cal=cal, $
     notimelabel=notimelabel, timelabelpos=timelabelpos, $
 	tlcharsize=tlcharsize, $
@@ -51,10 +53,10 @@ if total(vns eq '') gt 0 then begin
 endif
 
 ;----- set_time -----;
-if ~keyword_set(set_time) then set_time=!map2d.time
+if ~keyword_set(set_time) then time_tmp=!map2d.time
 
-;----- aacgm -----;
-if ~keyword_set(aacgm) then aacgm=!map2d.coord
+;----- coord -----;
+if ~keyword_set(coord) then coord_tmp=!map2d.coord
 
 ;----- color range -----;
 default_colorrange = [0.01e+3, 2.0e+3]
@@ -79,12 +81,12 @@ for ivn=0L, n_elements(vns)-1 do begin
 	endelse
 
     ;----- obtain image and position data -----;
-	get_data_thmasi, vn, set_time=set_time, $
-    	cal=cal, altitude=altitude, aacgm=aacgm, data=data
+	get_data_thmasi, vn, set_time=time_tmp, $
+    	cal=cal, altitude=altitude, aacgm=coord_tmp, data=data
 
 	elev=data.elev
 	img=reform(data.data)
-	if keyword_set(aacgm) then begin
+	if coord_tmp eq 1 then begin
 		lats_cor=data.corner_mlat
 		lons_cor=reform(data.corner_mlt)
 	endif else begin
@@ -178,8 +180,8 @@ if ~keyword_set(notimelabel) then begin
     endif else begin  ;default position
         x = !x.window[0]+0.02 & y = !y.window[0]+0.02
     endelse
-    t = set_time
-    tstr = time_string(t, tfor='hh:mm')+' ut'
+    t = time_tmp
+    tstr = time_string(t, tfor='hh:mm:ss')+' ut'
         xyouts, x, y, tstr, /normal, $
         font=1, charsize=tlcharsize
 endif

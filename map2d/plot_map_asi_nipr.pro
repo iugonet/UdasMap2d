@@ -48,7 +48,7 @@ pro plot_map_asi_nipr, asi_vns, set_time=set_time, $
     scale=scale, erase=erase, position=position, $
 	label=label, stereo=stereo, coast=coast, $
 	mapcharsize=mapcharsize, $
-    aacgm=aacgm, mltlabel=mltlabel, lonlab=lonlab, $
+    coord=coord, mltlabel=mltlabel, lonlab=lonlab, $
     nogrid=nogrid, dlat_grid=dlat_grid, dlon_grid=dlon_grid, $
     color_grid=color_grid, linethick_grid=linethick_grid, $
     notimelabel=notimelabel, timelabelpos=timelabelpos, $
@@ -69,14 +69,14 @@ map2d_init
 map2d_set, glatc=glatc, glonc=glonc, $
     scale=scale, erase=erase, position=position, label=label, $
     stereo=stereo, charsize=mapcharsize, $
-    aacgm=aacgm, set_time=set_time, mltlabel=mltlabel, lonlab=lonlab, $
+    coord=coord, set_time=set_time, mltlabel=mltlabel, lonlab=lonlab, $
     nogrid=nogrid, $
     dlat_grid=dlat_grid, dlon_grid=dlon_grid, color_grid=color_grid, $
-    linethick_grid=linethick_grid 
+    linethick_grid=linethick_grid
 
 ;Draw a fan plot on map
 overlay_map_asi_nipr, asi_vns, set_time=set_time, $
-    altitude=altitude, aacgm=aacgm, position=position, $
+    altitude=altitude, coord=coord, position=position, $
     colorrange=colorrange, $
     notimelabel=notimelabel, timelabelpos=timelabelpos, $
 	tlcharsize=tlcharsize, $
@@ -85,7 +85,7 @@ overlay_map_asi_nipr, asi_vns, set_time=set_time, $
 
 ;Draw the world map
 if keyword_set(coast) then begin
-    overlay_map_coast, geo_plot=(~keyword_set(aacgm)), position=position
+    overlay_map_coast, coord=coord, position=position
 endif
   
 ;Draw the color scale on the right in screen

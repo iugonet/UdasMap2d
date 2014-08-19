@@ -144,6 +144,9 @@ endelse
 corner_mlat='' & corner_mlon=''
 center_mlat='' & center_mlon=''
 if keyword_set(aacgm) then begin
+	;----- Load the S-H coefficients -----;
+    ts = time_struct(set_time)
+    aacgmloadcoef, ts.year
 	;----- corner mlat mlon -----;
 	altmat = corner_glat & altmat[*] = alti ;***** altitude in km *****;
 	aacgmconvcoord, corner_glat, corner_glon, altmat, $
